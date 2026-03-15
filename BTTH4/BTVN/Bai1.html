@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng ký tài khoản</title>
+    <style>
+        body { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            font-family: sans-serif; }
+        h1 { 
+            background-color: rgb(182, 195, 206); 
+            text-align: center; 
+            padding: 10px; }
+        .field { 
+            margin-bottom: 15px; }
+        label { 
+            display: block; 
+            margin-bottom: 4px; 
+            font-weight: bold; }
+        input { 
+            width: 100%; 
+            padding: 8px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; }
+        input.error { 
+            border-color: red; }
+        input.valid { 
+            border-color: green; }
+        input[type="radio"], input[type="checkbox"] { 
+            width: auto; }
+        .error-msg { 
+            color: red; 
+            font-size: 13px; }
+        button[type="submit"] { 
+            width: 100%; 
+            padding: 10px; 
+            background-color: rgb(25, 119, 233); 
+            color: white; border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px; }
+        #successMsg { 
+            display: none; 
+            text-align: center; 
+            color: green; 
+            margin-top: 20px; }
+
+        .name-count { 
+            font-size: 12px; 
+            color: #888; 
+            font-weight: normal; }
+
+        .toggle-pw { 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 16px; }
+
+        .strength-bar { 
+            height: 5px; 
+            background: #ddd; 
+            margin-top: 5px; }
+        .strength-fill { 
+            height: 100%; 
+            width: 0; }
+        .strength-text { 
+            font-size: 13px; }
+    </style>
+</head>
+<body>
+    <h1>Đăng ký tài khoản</h1>
+    <form id="registerForm">
+
+        <div class="field">
+            <label>Họ và tên <small class="name-count" id="nameCount">0/50</small></label>
+            <input type="text" id="fullname" placeholder="Nguyễn Văn A" maxlength="50">
+            <span class="error-msg" id="fullname-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Email</label>
+            <input type="text" id="email" placeholder="example@gmail.com">
+            <span class="error-msg" id="email-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Số điện thoại</label>
+            <input type="text" id="phone" placeholder="0xxxxxxxxx">
+            <span class="error-msg" id="phone-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Mật khẩu</label>
+            <input type="password" id="password" placeholder="Tối thiểu 8 ký tự">
+            <button type="button" class="toggle-pw" onclick="togglePw('password', this)">👁</button>
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <small class="strength-text" id="strengthText"></small>
+            <span class="error-msg" id="password-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Xác nhận mật khẩu</label>
+            <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu">
+            <button type="button" class="toggle-pw" onclick="togglePw('confirmPassword', this)">👁</button>
+            <span class="error-msg" id="confirmPassword-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Giới tính</label>
+            <label><input type="radio" name="gender" value="Nam"> Nam</label>
+            <label><input type="radio" name="gender" value="Nữ"> Nữ</label>
+            <label><input type="radio" name="gender" value="Khác"> Khác</label>
+            <span class="error-msg" id="gender-error"></span>
+        </div>
+
+        <div class="field">
+            <label><input type="checkbox" id="terms"> Tôi đồng ý với điều khoản sử dụng</label>
+            <span class="error-msg" id="terms-error"></span>
+        </div>
+
+        <button type="submit">Đăng ký</button>
+    </form>
+    <div id="successMsg"></div>
+
+    <script>
+        function togglePw(id, btn) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.textContent = input.type === 'password' ? '👁' : '🙈';
+        }
+
+        document.getElementById('fullname').addEventListener('input', function () {
+            document.getElementById('nameCount').textContent = this.value.length + '/50';
+        });
+
+        document.getElementById('password').addEventListener('input', function () {
+            const pw = this.value;
+            const fill = document.getElementById('strengthFill');
+            const text = document.getElementById('strengthText');
+            const score = [pw.length >= 8, /[A-Z]/.test(pw), /\d/.test(pw), /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length;
+
+            if (!pw) {
+                fill.style.width = '0';
+                text.textContent = '';
+            } else if (score <= 1) {
+                fill.style.width = '33%'; fill.style.background = 'red';
+                text.textContent = 'Yếu'; text.style.color = 'red';
+            } else if (score <= 2) {
+                fill.style.width = '66%'; fill.style.background = 'orange';
+                text.textContent = 'Trung bình'; text.style.color = 'orange';
+            } else {
+                fill.style.width = '100%'; fill.style.background = 'green';
+                text.textContent = 'Mạnh'; text.style.color = 'green';
+            }
+        });
+
+        function showError(id, msg) {
+            document.getElementById(id + '-error').textContent = msg;
+            const el = document.getElementById(id);
+            if (el) { el.classList.add('error'); el.classList.remove('valid'); }
+        }
+        function clearError(id) {
+            document.getElementById(id + '-error').textContent = '';
+            const el = document.getElementById(id);
+            if (el) { el.classList.remove('error'); el.classList.add('valid'); }
+        }
+
+        function validateFullname() {
+            const val = document.getElementById('fullname').value.trim();
+            if (!val) return showError('fullname', 'Vui lòng nhập họ tên.'), false;
+            if (val.length < 3) return showError('fullname', 'Họ tên phải ít nhất 3 ký tự.'), false;
+            if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(val)) return showError('fullname', 'Họ tên chỉ chứa chữ cái.'), false;
+            return clearError('fullname'), true;
+        }
+        function validateEmail() {
+            const val = document.getElementById('email').value.trim();
+            if (!val) return showError('email', 'Vui lòng nhập email.'), false;
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return showError('email', 'Email không hợp lệ.'), false;
+            return clearError('email'), true;
+        }
+        function validatePhone() {
+            const val = document.getElementById('phone').value.trim();
+            if (!val) return showError('phone', 'Vui lòng nhập số điện thoại.'), false;
+            if (!/^0[0-9]{9}$/.test(val)) return showError('phone', 'SĐT phải 10 số, bắt đầu bằng 0.'), false;
+            return clearError('phone'), true;
+        }
+        function validatePassword() {
+            const val = document.getElementById('password').value;
+            if (!val) return showError('password', 'Vui lòng nhập mật khẩu.'), false;
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(val)) return showError('password', 'Mật khẩu ≥ 8 ký tự, có chữ hoa, chữ thường, số.'), false;
+            return clearError('password'), true;
+        }
+        function validateConfirm() {
+            const pw = document.getElementById('password').value;
+            const cpw = document.getElementById('confirmPassword').value;
+            if (!cpw) return showError('confirmPassword', 'Vui lòng xác nhận mật khẩu.'), false;
+            if (pw !== cpw) return showError('confirmPassword', 'Mật khẩu không khớp.'), false;
+            return clearError('confirmPassword'), true;
+        }
+        function validateGender() {
+            if (!document.querySelector('input[name="gender"]:checked')) return showError('gender', 'Vui lòng chọn giới tính.'), false;
+            return clearError('gender'), true;
+        }
+        function validateTerms() {
+            if (!document.getElementById('terms').checked) return showError('terms', 'Vui lòng đồng ý điều khoản.'), false;
+            return clearError('terms'), true;
+        }
+
+        document.getElementById('fullname').addEventListener('blur', validateFullname);
+        document.getElementById('email').addEventListener('blur', validateEmail);
+        document.getElementById('phone').addEventListener('blur', validatePhone);
+        document.getElementById('password').addEventListener('blur', validatePassword);
+        document.getElementById('confirmPassword').addEventListener('blur', validateConfirm);
+
+        ['fullname', 'email', 'phone', 'password', 'confirmPassword'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => clearError(id));
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const ok = validateFullname() & validateEmail() & validatePhone()
+                     & validatePassword() & validateConfirm()
+                     & validateGender() & validateTerms();
+            if (ok) {
+                const name = document.getElementById('fullname').value.trim();
+                this.style.display = 'none';
+                const msg = document.getElementById('successMsg');
+                msg.style.display = 'block';
+                msg.innerHTML = `Đăng ký thành công! 🎉<br>Xin chào, <strong>${name}</strong>!`;
+            }
+        });
+    </script>
+</body>
+</html>

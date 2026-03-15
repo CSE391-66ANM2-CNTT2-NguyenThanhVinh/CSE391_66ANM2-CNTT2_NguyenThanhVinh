@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1{
+        background-color: rgb(182, 195, 206);
+        text-align: center;
+    }
+    label{
+        display: inline-block;
+        margin : 5px;
+    }
+    input {
+        padding: 5px 10px;
+    }
+    button { 
+        padding: 5px 10px; 
+        cursor: pointer; 
+        border-radius: 5px; 
+        background-color: rgb(25, 119, 233); 
+        color: white; border: none; 
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 18px;
+    }
+    th,td {
+        border: 1px solid grey;
+        text-align: center;
+    }
+    .highlight {
+        background-color: yellow;
+    }
+    .delete-btn {
+        background-color: red;
+        color: white;
+    }
+</style>
+<body>
+    <h1>Quản lý sinh viên</h1>
+    <div>
+        <label for="name">Họ tên</label>
+        <input type="text" id = "name"placeholder = "Nhập họ và tên ">
+
+        <label for="score">Điểm</label>
+        <input type="number" id = "score" min = "0" max = "10" step ="0.1" placeholder = "0-10">
+
+        <button type = "button" id = "addBtn" >+ Thêm</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Họ tên</th>
+                <th>Điểm</th>
+                <th>Xếp loại</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id = "content">
+        </tbody>
+    </table>
+    <div class="stats" id="stats">
+        Tổng sinh viên: 0 | Điểm trung bình: 0.00
+    </div>    
+</body>
+<script>
+    const hoTenInput = document.getElementById('name');
+    const scoreInput = document.getElementById('score');
+    const addBtn = document.getElementById('addBtn');
+    const tableBody = document.getElementById('content');
+    const stats = document.getElementById('stats');
+
+    function xepLoai (score) {
+        if (score >= 8.5) return 'Giỏi';
+        if (score >= 7.0) return 'Khá';
+        if (score >= 5.0) return 'Trung bình';
+        return 'Yếu';
+    }
+    const sinhVien = [];
+
+    function renderTable() {
+        tableBody.innerHTML = '';
+
+        sinhVien.forEach((student, index) => {
+            const tr = document.createElement('tr');
+            if (student.score < 5) {
+                    tr.classList.add('highlight');
+            }
+
+            const loai = xepLoai(student.score);
+
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${student.name}</td>
+                <td>${student.score.toFixed(1)}</td>
+                <td>${loai}</td>
+                <td><button type="button" class="delete-btn" data-index="${index}">Xóa</button></td>
+            `;
+            tableBody.appendChild(tr);
+        });
+        updateStats();
+    }
+    function updateStats() {
+        const total = sinhVien.length;
+        const avg = total === 0 ? 0 : sinhVien.reduce((sum, s) => sum + s.score, 0) / total;
+        stats.textContent = `Tổng sinh viên: ${total} | Điểm trung bình: ${avg.toFixed(2)}`;
+    }
+    function themSinhVien() {
+        const name = hoTenInput.value.trim();
+        const scoreValue = scoreInput.value.trim();
+
+        if (!name) {
+            alert('Vui lòng nhập họ tên.');
+            hoTenInput.focus();
+            return;
+        }
+        const score = Number(scoreValue);
+        const isValidScore = scoreValue !== '' && !Number.isNaN(score) && score >= 0 && score <= 10;
+        if (!isValidScore) {
+            alert('Điểm phải là số từ 0 đến 10.');
+            scoreInput.focus();
+            return; 
+        }
+        sinhVien.push({ name, score });
+        renderTable();
+        hoTenInput.value = '';
+        scoreInput.value = '';
+        hoTenInput.focus();
+    }
+    addBtn.addEventListener('click',themSinhVien);
+
+    scoreInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            themSinhVien();
+        }
+    });
+    tableBody.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!target.matches('.delete-btn')) return;
+
+        const index = Number(target.dataset.index);
+        if (Number.isNaN(index)) return;
+
+        sinhVien.splice(index, 1);
+        renderTable();
+    });
+</script>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Đặt hàng</title>
+    <style>
+        body { max-width: 500px; margin: 0 auto; padding: 20px; font-family: sans-serif; }
+        h1 { background-color: rgb(182, 195, 206); text-align: center; padding: 10px; }
+        .field { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; }
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        input.error, select.error, textarea.error { border-color: red; }
+        input.valid, select.valid, textarea.valid { border-color: green; }
+        .error-msg { color: red; font-size: 13px; }
+        .radio-group { display: flex; gap: 20px; }
+        .radio-group label { display: inline; font-weight: normal; }
+        #charCount { font-size: 13px; color: gray; }
+        #charCount.over { color: red; }
+        #tongTien { margin-top: 5px; font-weight: bold; color: rgb(25, 119, 233); }
+        button { padding: 10px; background-color: rgb(25, 119, 233); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; }
+        #btnSubmit { width: 100%; }
+        #confirmBox { display: none; border: 1px solid #ccc; border-radius: 8px; padding: 15px; background: #f9f9f9; margin-top: 15px; }
+        #confirmBox h3 { margin-top: 0; }
+        .confirm-btns { display: flex; gap: 10px; margin-top: 10px; }
+        #btnCancel { background-color: gray; }
+        #successMsg { display: none; text-align: center; font-size: 18px; color: green; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Form Đặt Hàng</h1>
+
+    <form id="orderForm">
+        <div class="field">
+            <label>Tên sản phẩm</label>
+            <select id="product">
+                <option value="">-- Chọn sản phẩm --</option>
+                <option value="Áo">Áo — 150.000₫</option>
+                <option value="Quần">Quần — 200.000₫</option>
+                <option value="Giày">Giày — 350.000₫</option>
+                <option value="Mũ">Mũ — 100.000₫</option>
+            </select>
+            <span class="error-msg" id="product-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Số lượng</label>
+            <input type="number" id="quantity" min="1" max="99" placeholder="1 - 99">
+            <span class="error-msg" id="quantity-error"></span>
+        </div>
+
+        <div id="tongTien"></div>
+
+        <div class="field" style="margin-top:15px">
+            <label>Ngày giao hàng</label>
+            <input type="date" id="deliveryDate">
+            <span class="error-msg" id="deliveryDate-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Địa chỉ giao</label>
+            <input type="text" id="address" placeholder="Số nhà, đường, phường, quận...">
+            <span class="error-msg" id="address-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Ghi chú <span style="font-weight:normal">(không bắt buộc)</span></label>
+            <textarea id="note" rows="3" placeholder="Tối đa 200 ký tự..."></textarea>
+            <span id="charCount">0/200</span>
+            <span class="error-msg" id="note-error"></span>
+        </div>
+
+        <div class="field">
+            <label>Phương thức thanh toán</label>
+            <div class="radio-group">
+                <label><input type="radio" name="payment" value="COD"> COD</label>
+                <label><input type="radio" name="payment" value="Chuyển khoản"> Chuyển khoản</label>
+                <label><input type="radio" name="payment" value="Ví điện tử"> Ví điện tử</label>
+            </div>
+            <span class="error-msg" id="payment-error"></span>
+        </div>
+
+        <button type="submit" id="btnSubmit">Đặt hàng</button>
+    </form>
+
+    <div id="confirmBox">
+        <h3>📋 Xác nhận đơn hàng</h3>
+        <div id="confirmInfo"></div>
+        <div class="confirm-btns">
+            <button id="btnConfirm">✅ Xác nhận</button>
+            <button id="btnCancel">❌ Hủy</button>
+        </div>
+    </div>
+
+    <div id="successMsg"></div>
+
+    <script>
+        const prices = { 'Áo': 150000, 'Quần': 200000, 'Giày': 350000, 'Mũ': 100000 };
+
+        function showError(id, msg) {
+            document.getElementById(id + '-error').textContent = msg;
+            const el = document.getElementById(id);
+            if (el) { el.classList.add('error'); el.classList.remove('valid'); }
+        }
+        function clearError(id) {
+            document.getElementById(id + '-error').textContent = '';
+            const el = document.getElementById(id);
+            if (el) { el.classList.remove('error'); el.classList.add('valid'); }
+        }
+        function formatVND(n) { return Number(n).toLocaleString('vi-VN') + '₫'; }
+
+        function tinhTong() {
+            const product  = document.getElementById('product').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const tongTien = document.getElementById('tongTien');
+            if (product && prices[product] && quantity > 0) {
+                tongTien.textContent = `Tổng tiền: ${formatVND(prices[product] * quantity)}`;
+            } else {
+                tongTien.textContent = '';
+            }
+        }
+
+        function validateProduct() {
+            const val = document.getElementById('product').value;
+            if (!val) return showError('product', 'Vui lòng chọn sản phẩm.'), false;
+            return clearError('product'), true;
+        }
+        function validateQuantity() {
+            const val = parseInt(document.getElementById('quantity').value);
+            if (!val || val < 1 || val > 99) return showError('quantity', 'Số lượng phải từ 1 đến 99.'), false;
+            return clearError('quantity'), true;
+        }
+        function validateDate() {
+            const val = document.getElementById('deliveryDate').value;
+            if (!val) return showError('deliveryDate', 'Vui lòng chọn ngày giao.'), false;
+            const today    = new Date(); today.setHours(0, 0, 0, 0);
+            const selected = new Date(val);
+            const max      = new Date(); max.setDate(max.getDate() + 30);
+            if (selected < today) return showError('deliveryDate', 'Ngày giao không được là quá khứ.'), false;
+            if (selected > max)   return showError('deliveryDate', 'Ngày giao không quá 30 ngày từ hôm nay.'), false;
+            return clearError('deliveryDate'), true;
+        }
+        function validateAddress() {
+            const val = document.getElementById('address').value.trim();
+            if (!val) return showError('address', 'Vui lòng nhập địa chỉ.'), false;
+            if (val.length < 10) return showError('address', 'Địa chỉ ít nhất 10 ký tự.'), false;
+            return clearError('address'), true;
+        }
+        function validateNote() {
+            const val = document.getElementById('note').value;
+            if (val.length > 200) return showError('note', 'Ghi chú không quá 200 ký tự.'), false;
+            return clearError('note'), true;
+        }
+        function validatePayment() {
+            if (!document.querySelector('input[name="payment"]:checked'))
+                return showError('payment', 'Vui lòng chọn phương thức thanh toán.'), false;
+            return clearError('payment'), true;
+        }
+
+        document.getElementById('note').addEventListener('input', function() {
+            const len = this.value.length;
+            const counter = document.getElementById('charCount');
+            counter.textContent = `${len}/200`;
+            counter.className = len > 200 ? 'over' : '';
+            validateNote();
+        });
+
+        document.getElementById('product').addEventListener('change', () => { validateProduct(); tinhTong(); });
+        document.getElementById('quantity').addEventListener('input', () => { validateQuantity(); tinhTong(); });
+
+        document.getElementById('deliveryDate').addEventListener('blur', validateDate);
+        document.getElementById('address').addEventListener('blur', validateAddress);
+
+        ['address'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => clearError(id));
+        });
+
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ok = validateProduct() & validateQuantity() & validateDate()
+                     & validateAddress() & validateNote() & validatePayment();
+            if (!ok) return;
+
+            const product  = document.getElementById('product').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const date     = document.getElementById('deliveryDate').value;
+            const payment  = document.querySelector('input[name="payment"]:checked').value;
+            const total    = formatVND(prices[product] * quantity);
+
+            document.getElementById('confirmInfo').innerHTML = `
+                <p>🛍️ Sản phẩm: <strong>${product}</strong></p>
+                <p>🔢 Số lượng: <strong>${quantity}</strong></p>
+                <p>💰 Tổng tiền: <strong>${total}</strong></p>
+                <p>📅 Ngày giao: <strong>${date}</strong></p>
+                <p>💳 Thanh toán: <strong>${payment}</strong></p>
+            `;
+            document.getElementById('confirmBox').style.display = 'block';
+        });
+
+        document.getElementById('btnConfirm').addEventListener('click', () => {
+            document.getElementById('orderForm').style.display = 'none';
+            document.getElementById('confirmBox').style.display = 'none';
+            const msg = document.getElementById('successMsg');
+            msg.style.display = 'block';
+            msg.innerHTML = `Đặt hàng thành công! 🎉<br>Cảm ơn bạn đã mua hàng!`;
+        });
+
+        document.getElementById('btnCancel').addEventListener('click', () => {
+            document.getElementById('confirmBox').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
